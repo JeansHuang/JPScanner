@@ -1,6 +1,7 @@
 # SuperScanner
-QRScanner BarCodeScanner 二维码条形码扫描
-# iOS使用系统API进行二维码条形码扫描&限制扫描区域
+QRScanner BarCodeScanner 二维码条形码扫描  
+iOS二维码条形码扫描，支持iOS7+，限制扫描区域，提高扫描速度
+## iOS使用系统API进行二维码条形码扫描&限制扫描区域
 ---
 GitHub看了不少，找了些，发现没几个满意的，于是自己整理了一下。
 重新写了个demo

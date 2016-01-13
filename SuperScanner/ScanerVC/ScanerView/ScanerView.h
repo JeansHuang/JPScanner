@@ -8,9 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-#define WIDTH(v)                (v).frame.size.width
-#define HEIGHT(v)               (v).frame.size.height
-
 @interface ScanerView : UIView
 
 //! 扫描区域边长

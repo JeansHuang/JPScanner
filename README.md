@@ -6,7 +6,8 @@ iOS二维码条形码扫描，支持iOS7+，限制扫描区域，提高扫描速
 GitHub看了不少，找了些，发现没几个满意的，于是自己整理了一下。
 重新写了个demo
 #### 1.创建扫描 ####
-关键代码如下：
+关键代码如下：  
+
 ```
     //创建会话
     self.session = [[AVCaptureSession alloc] init];
@@ -67,43 +68,30 @@ GitHub看了不少，找了些，发现没几个满意的，于是自己整理�
 AVCaptureMetadataOutput *output;
 output.rectOfInterest
 ```
-关键是设置这个属性，但是很多坑，参考不少资料试了很多方法，都不对，准确地说，限制的区域不是100%精准。
+关键是设置这个属性，但是很多坑，参考不少资料试了很多方法，原来是要在`AVCaptureInputPortFormatDescriptionDidChangeNotification`通知内设置才行。
 
-包括下面参考的博文资料中，有位大神是阿里的，我测试了下支付宝，也不是100%精准限制了区域。不过其实也不大影响实际使用。
+
+```
+__weak typeof(self) weakSelf = self;
+[[NSNotificationCenter defaultCenter]addObserverForName:AVCaptureInputPortFormatDescriptionDidChangeNotification
+                                                 object:nil
+                                                  queue:[NSOperationQueue mainQueue]
+                                             usingBlock:^(NSNotification * _Nonnull note) {
+                                                 if (weakSelf){
+                                                     //调整扫描区域
+                                                     AVCaptureMetadataOutput *output = weakSelf.session.outputs.firstObject;
+                                                     output.rectOfInterest = [weakSelf.previewLayer metadataOutputRectOfInterestForRect:weakSelf.scanerView.scanAreaRect];
+                                                 }
+                                             }];
+```
 
 > **参考（感谢）博文资料：**  
 [IOS7使用原生API进行二维码和条形码的扫描][3]  
 [iOS 原生二维码扫描（可限制扫描区域）][4]  
 [IOS二维码扫描,你需要注意的两件事][5]  
+[iOS 原生扫 QR 码的那些事][9]  
 
-Google一番，发现[Radar Samples][6]其中报告了
-> **iOS 7 Bugs**
-> **ScanAreaBug:** [AVCaptureMetadataOutput ignores Full-Screen rectOfInterest][7] (rdar://14427767)
-
-其实是有bug的，因此就不太纠结100%精准的问题。  
-最后给出最终限制区域的关键代码：  
-***y轴上的20是我用4寸屏的5c得到的偏差，可以根据实际情况修正下，或许不用+20也行。此设置已经基本只会扫码框内的二维码了***
-```
-//调整扫描区域
-        AVCaptureMetadataOutput *output = self.session.outputs.firstObject;
-        //
-        CGRect rect = CGRectMake((self.scanerView.scanAreaRect.origin.y + 20) / HEIGHT(self.scanerView),
-                                 self.scanerView.scanAreaRect.origin.x / WIDTH(self.scanerView),
-                                 self.scanerView.scanAreaRect.size.height / HEIGHT(self.scanerView),
-                                 self.scanerView.scanAreaRect.size.width / WIDTH(self.scanerView));
-        output.rectOfInterest = rect;
-```
-
-
-#### 3.最后 ####
-如果大家有100%精准的解决方法或更方便的计算方式，请评论回复指教下。谢谢。
-```
-- (CGRect)metadataOutputRectOfInterestForRect:(CGRect)rectInLayerCoordinates
-- (CGRect)rectForMetadataOutputRectOfInterest:(CGRect)rectInMetadataOutputCoordinates
-```
-据说上面的方法可以直接转换坐标，可是我的结果总是0，无奈只能自己计算了。
-
-[博文地址][8]
+[博文地址][8]  
 
 
 
@@ -114,4 +102,4 @@ Google一番，发现[Radar Samples][6]其中报告了
   [6]: https://github.com/Cocoanetics/RadarSamples
   [7]: https://www.cocoanetics.com/2013/09/welcome-to-ios-7-issues/
   [8]: http://my.oschina.net/jeans/blog/519365#OSC_h4_4
-  
+  [9]: http://c0ming.me/qr-code-scan/

@@ -38,8 +38,8 @@
 
 - (CGRect)scanAreaRect{
     //居中
-    _scanAreaRect = CGRectMake(WIDTH(self) / 2 - self.scanAreaEdgeLength / 2,
-                               HEIGHT(self) / 2 - self.scanAreaEdgeLength / 2,
+    _scanAreaRect = CGRectMake(CGRectGetWidth(self.frame) / 2 - self.scanAreaEdgeLength / 2,
+                               CGRectGetHeight(self.frame) / 2 - self.scanAreaEdgeLength / 2,
                                self.scanAreaEdgeLength,
                                self.scanAreaEdgeLength);
     return _scanAreaRect;
@@ -51,7 +51,7 @@
     self.qrLine = [[UIImageView alloc]initWithImage:[UIImage imageNamed:@"ff_QRCodeScanLine"]];
     self.qrLine.frame = CGRectMake(0,
                                    0,
-                                   WIDTH(self),
+                                   CGRectGetWidth(self.frame),
                                    12.0f);
     [self addSubview:self.qrLine];
     

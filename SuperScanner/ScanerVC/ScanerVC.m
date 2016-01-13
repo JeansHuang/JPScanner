@@ -37,9 +37,13 @@
     self.scanerView.scanAreaEdgeLength = [[UIScreen mainScreen] bounds].size.width - 2 * 50;
 }
 
+- (void)dealloc{
+    [[NSNotificationCenter defaultCenter]removeObserver:self];
+}
+
 - (void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-
+    
     if (!self.session){
         
         //添加镜头盖开启动画
@@ -54,16 +58,9 @@
         [self setupAVFoundation];
         
         //调整摄像头取景区域
-        self.previewLayer.frame = self.view.bounds;
-        
-        //调整扫描区域
-        AVCaptureMetadataOutput *output = self.session.outputs.firstObject;
-        //根据实际偏差调整y轴
-        CGRect rect = CGRectMake((self.scanerView.scanAreaRect.origin.y + 20) / HEIGHT(self.scanerView),
-                                 self.scanerView.scanAreaRect.origin.x / WIDTH(self.scanerView),
-                                 self.scanerView.scanAreaRect.size.height / HEIGHT(self.scanerView),
-                                 self.scanerView.scanAreaRect.size.width / WIDTH(self.scanerView));
-        output.rectOfInterest = rect;
+        CGRect rect = self.view.bounds;
+        rect.origin.y = self.navigationController.navigationBarHidden ? 0 : 64;
+        self.previewLayer.frame = rect;
     }
 }
 
@@ -84,17 +81,17 @@
     //获取摄像头设备
     AVCaptureDevice *device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
     NSError *error = nil;
-
+    
     //创建输入流
     AVCaptureDeviceInput *input = [AVCaptureDeviceInput deviceInputWithDevice:device error:&error];
-
+    
     if(input) {
         [self.session addInput:input];
     } else {
         //出错处理
         NSLog(@"%@", error);
         NSString *msg = [NSString stringWithFormat:@"请在手机【设置】-【隐私】-【相机】选项中，允许【%@】访问您的相机",[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleDisplayName"]];
-
+        
         UIAlertView *av = [[UIAlertView alloc]initWithTitle:@"提醒"
                                                     message:msg
                                                    delegate:self
@@ -109,8 +106,8 @@
     [self.session addOutput:output];
     
     //设置扫码类型
-    output.metadataObjectTypes = @[AVMetadataObjectTypeQRCode,  //条形码
-                                   AVMetadataObjectTypeEAN13Code,
+    output.metadataObjectTypes = @[AVMetadataObjectTypeQRCode,
+                                   AVMetadataObjectTypeEAN13Code,//条形码
                                    AVMetadataObjectTypeEAN8Code,
                                    AVMetadataObjectTypeCode128Code];
     //设置代理，在主线程刷新
@@ -123,7 +120,19 @@
     
     if ([self.previewLayer connection].isVideoOrientationSupported)
         [self.previewLayer connection].videoOrientation = AVCaptureVideoOrientationPortrait;
-        
+    
+    __weak typeof(self) weakSelf = self;
+    [[NSNotificationCenter defaultCenter]addObserverForName:AVCaptureInputPortFormatDescriptionDidChangeNotification
+                                                     object:nil
+                                                      queue:[NSOperationQueue mainQueue]
+                                                 usingBlock:^(NSNotification * _Nonnull note) {
+                                                     if (weakSelf){
+                                                         //调整扫描区域
+                                                         AVCaptureMetadataOutput *output = weakSelf.session.outputs.firstObject;
+                                                         output.rectOfInterest = [weakSelf.previewLayer metadataOutputRectOfInterestForRect:weakSelf.scanerView.scanAreaRect];
+                                                     }
+                                                 }];
+    
     //开始扫码
     [self.session startRunning];
 }
@@ -140,7 +149,7 @@
                                               cancelButtonTitle:@"OK"
                                               otherButtonTitles: nil];
             [av show];
-
+            
             break;
         }else{
             [self.session stopRunning];

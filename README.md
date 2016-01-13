@@ -8,7 +8,7 @@ GitHub看了不少，找了些，发现没几个满意的，于是自己整理�
 #### 1.创建扫描 ####
 关键代码如下：  
 
-```
+```objc
     //创建会话
     self.session = [[AVCaptureSession alloc] init];
     
@@ -64,14 +64,14 @@ GitHub看了不少，找了些，发现没几个满意的，于是自己整理�
 ![demo截图][2]  
 如图所示，非指定区域内不会识别，这样能够这样能够加快识别速度。
 
-```
+```objc
 AVCaptureMetadataOutput *output;
 output.rectOfInterest
 ```
 关键是设置这个属性，但是很多坑，参考不少资料试了很多方法，原来是要在`AVCaptureInputPortFormatDescriptionDidChangeNotification`通知内设置才行。
 
 
-```
+```objc
 __weak typeof(self) weakSelf = self;
 [[NSNotificationCenter defaultCenter]addObserverForName:AVCaptureInputPortFormatDescriptionDidChangeNotification
                                                  object:nil
